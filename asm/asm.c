@@ -3,20 +3,10 @@
 //
 #include <stdio.h>
 #include <string.h>
-#include <malloc.h>
 #include <stdlib.h>
 #include "../common/ops.h"
 #include "../common/regs.h"
-
-#define DEBUG
-#ifdef DEBUG
-    #define debug(str) printf("%s ", str)
-    #define debugln(str) printf("%s\n", str)
-#endif
-#ifndef DEBUG
-    #define debug(str)
-    #define debugln(str)
-#endif
+#include "../common/util.h"
 
 #define put_reg(r, output) r = strtok(NULL, " "); \
                            if(r == NULL) return -1; \
@@ -36,7 +26,7 @@ int parse_instruction(char* line, int len, FILE *output) {
     }
     Op op = op_from(op_s);
     if(op == UNKNOWN_OP) {
-        debug("Unknown OP\n");
+        debugln("Unknown OP");
         return -1;
     } else {
         debug(line);
@@ -118,7 +108,7 @@ int main(int argc, char *argv[]) {
     size_t len = 0;
     ssize_t nread;
 
-    printf("Reading\n");
+    printf("Reading...\n");
     while ((nread = getline(&line, &len, input)) != -1) {
         // strip newline
         if(nread > 0 && line[nread - 1] == '\n') {
@@ -135,6 +125,8 @@ int main(int argc, char *argv[]) {
             return -1;
         }
     }
+
+    printf("Done.\n");
 
     free(line);
     fclose(input);
