@@ -4,9 +4,6 @@
 #include <string.h>
 #include "ops.h"
 
-int MIN_OP = 0x00;
-int MAX_OP = 0x10;
-
 char op_mnemonics[][4] = {
     "NOP",
     "ADD",

@@ -5,6 +5,9 @@
 #ifndef REGULAR_VM_TOOLS_OPS_H
 #define REGULAR_VM_TOOLS_OPS_H
 
+#define MIN_OP 0x0
+#define MAX_OP 0x10
+
 typedef enum op {
     NOP=0x00,
     ADD=0x01,
@@ -25,9 +28,6 @@ typedef enum op {
     STB=0x10,
     UNKNOWN_OP=0xff,
 } Op;
-
-extern int MIN_OP;
-extern int MAX_OP;
 
 extern char op_mnemonics[][4];
 

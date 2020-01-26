@@ -5,9 +5,6 @@
 #include "regs.h"
 #include <string.h>
 
-int MIN_REG = 0x00;
-int MAX_REG = 0x1f;
-
 char reg_mnemonics[][4] = {
         "R0",
         "R1",

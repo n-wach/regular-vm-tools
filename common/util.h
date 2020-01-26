@@ -15,4 +15,6 @@
     #define debugln(str)
 #endif
 
+#define sign(v) v > 0 ? 1 : v < 0 ? -1 : 0
+
 #endif //REGULARVM_UTIL_H

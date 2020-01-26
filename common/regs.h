@@ -5,6 +5,9 @@
 #ifndef ASSEMBLER_REGS_H
 #define ASSEMBLER_REGS_H
 
+#define MIN_REG 0x0
+#define MAX_REG 0x1f
+
 typedef enum reg {
     R0=0x00,
     R1=0x01,
@@ -40,9 +43,6 @@ typedef enum reg {
     R31=0x1f,
     UNKNOWN_REG=0xff,
 } Reg;
-
-extern int MIN_REG;
-extern int MAX_REG;
 
 extern char reg_mnemonics[][4];
 
