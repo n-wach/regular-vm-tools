@@ -8,7 +8,7 @@
 #define MIN_OP 0x0
 #define MAX_OP 0x10
 
-typedef enum op {
+typedef enum __attribute__((__packed__)) op {
     NOP=0x00,
     ADD=0x01,
     SUB=0x02,
@@ -29,23 +29,5 @@ typedef enum op {
     UNKNOWN_OP=0xff,
 } Op;
 
-extern char op_mnemonics[][4];
-
-typedef enum instructionType {
-    OP,
-    OP_RA,
-    OP_RA_IMM,
-    OP_RA_RB,
-    OP_RA_RB_IMM,
-    OP_RA_RB_RC,
-} InstructionType;
-
-extern InstructionType instructionTypes[];
-
-char *op_name(Op op);
-
-Op op_from(char *name);
-
-InstructionType type_of(Op op);
 
 #endif //REGULAR_VM_TOOLS_OPS_H

@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include "../common/ops.h"
 #include "../common/regs.h"
+#include "../common/instructions.h"
 
 #define DEBUG
 #ifdef DEBUG
@@ -18,53 +19,81 @@
     #define debugln(str)
 #endif
 
-
-int decode_instruction(const char instr[4], FILE *output) {
-    Op op = (Op) instr[0];
-    Reg ra;
-    Reg rb;
-    Reg rc;
-    int imm;
-
-    if(op < MIN_OP || op > MAX_OP) {
-        debugln("Unknown OP");
-        return -1;
-    } else {
-        InstructionType type = type_of(op);
-        switch(type) {
-            case OP:
-                fprintf(output, "%s\n", op_mnemonics[op]);
-                break;
-            case OP_RA:
-                ra = instr[1];
-                fprintf(output, "%s %s\n", op_mnemonics[op], reg_mnemonics[op]);
-                break;
-            case OP_RA_IMM:
-                ra = instr[1];
-                imm = (instr[2] << 8) | instr[3];
-                fprintf(output, "%s %s 0x%x\n", op_mnemonics[op], reg_mnemonics[ra], imm);
-                break;
-            case OP_RA_RB:
-                ra = instr[1];
-                rb = instr[2];
-                fprintf(output, "%s %s %s\n", op_mnemonics[op], reg_mnemonics[ra], reg_mnemonics[rb]);
-                break;
-            case OP_RA_RB_IMM:
-                ra = instr[1];
-                rb = instr[2];
-                imm = instr[3];
-                fprintf(output, "%s %s %s 0x%x\n", op_mnemonics[op], reg_mnemonics[ra], reg_mnemonics[rb], imm);
-                break;
-            case OP_RA_RB_RC:
-                ra = instr[1];
-                rb = instr[2];
-                rc = instr[3];
-                fprintf(output, "%s %s %s %s\n", op_mnemonics[op], reg_mnemonics[ra], reg_mnemonics[rb], reg_mnemonics[rc]);
-                break;
-            default:
-                debugln("UNKNOWN TYPE");
-                return -1;
-        }
+#define fprintfOp(out, instruction, op) fprintf(out, #op)
+#define fprintfOpRa(out, instruction, op) fprintf(out, #op " %s", \
+    reg_name(instruction.op_ra.ra))
+#define fprintfOpRaImm(out, instruction, op) fprintf(out, #op " %s, %x", \
+    reg_name(instruction.op_ra_imm.ra), \
+    instruction.op_ra_imm.imm)
+#define fprintfOpRaRb(out, instruction, op) fprintf(out, #op " %s, %s", \
+    reg_name(instruction.op_ra_rb.ra), \
+    reg_name(instruction.op_ra_rb.rb))
+#define fprintfOpRaRbImm(out, instruction, op) fprintf(out, #op " %s, %s, %x", \
+    reg_name(instruction.op_ra_rb_imm.ra), \
+    reg_name(instruction.op_ra_rb_imm.rb), \
+    instruction.op_ra_rb_imm.imm)
+#define fprintfOpRaRbRc(out, instruction, op) fprintf(out, #op " %s, %s, %s", \
+    reg_name(instruction.op_ra_rb_rc.ra), \
+    reg_name(instruction.op_ra_rb_rc.rb), \
+    reg_name(instruction.op_ra_rb_rc.rc))
+    
+int decode_instruction(const Instruction i, FILE *out) {
+    Op op = i.op.op;
+    switch(op) {
+        case NOP:
+            fprintfOp(out, i, NOP);
+            break;
+        case ADD:
+            fprintfOpRaRbRc(out, i, ADD);
+            break;
+        case SUB:
+            fprintfOpRaRbRc(out, i, SUB);
+            break;
+        case AND:
+            fprintfOpRaRbRc(out, i, AND);
+            break;
+        case ORR:
+            fprintfOpRaRbRc(out, i, ORR);
+            break;
+        case XOR:
+            fprintfOpRaRbRc(out, i, XOR);
+            break;
+        case NOT:
+            fprintfOpRaRb(out, i, NOT);
+            break;
+        case LSH:
+            fprintfOpRaRbRc(out, i, LSH);
+            break;
+        case ASH:
+            fprintfOpRaRbRc(out, i, ASH);
+            break;
+        case TCU:
+            fprintfOpRaRbRc(out, i, TCU);
+            break;
+        case TCS:
+            fprintfOpRaRbRc(out, i, TCS);
+            break;
+        case SET:
+            fprintfOpRaImm(out, i, SET);
+            break;
+        case MOV:
+            fprintfOpRaRb(out, i, MOV);
+            break;
+        case LDW:
+            fprintfOpRaRb(out, i, LDW);
+            break;
+        case STW:
+            fprintfOpRaRb(out, i, STW);
+            break;
+        case LDB:
+            fprintfOpRaRb(out, i, LDB);
+            break;
+        case STB:
+            fprintfOpRaRb(out, i, STB);
+            break;
+        default:
+            printf("Unknown Op %x", op);
+            return -1;
     }
 
     return 1;
@@ -92,12 +121,13 @@ int main(int argc, char *argv[]) {
 
     printf("Reading...\n");
     while (1) {
-        char instr[4];
-        fread(&instr, 1, 4, input);
+        Instruction i;
+        fread(&i, 4, 1, input);
         if(feof(input)) break;
-        int status = decode_instruction(instr, output);
+        int status = decode_instruction(i, output);
         if(status == -1) {
-            printf("Decode error %x %x %x %x", instr[0], instr[1], instr[2], instr[3]);
+            printf("Decode error %x %x %x %x", i.op_ra_rb_rc.op, 
+                    i.op_ra_rb_rc.ra, i.op_ra_rb_rc.rb, i.op_ra_rb_rc.rc);
             fclose(input);
             fclose(output);
             return -1;

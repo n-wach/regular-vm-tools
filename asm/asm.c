@@ -3,88 +3,111 @@
 //
 #include <stdio.h>
 #include <string.h>
-#include <stdlib.h>
-#include "../common/ops.h"
-#include "../common/regs.h"
-#include "../common/util.h"
+#include "statement.h"
+#include "../common/instructions.h"
+#include "asm.h"
 
-#define put_reg(r, output) r = strtok(NULL, " "); \
-                           if(r == NULL) return -1; \
-                           putc(reg_from(r), output); \
+Instruction *get_instructions(int count, ...) {
+    va_list ap;
+    va_start (ap, count);
 
-int parse_instruction(char* line, int len, FILE *output) {
-    char * op_s;
-    char * ra_s;
-    char * rb_s;
-    char * rc_s;
-    char * imm_s;
-    unsigned long imm;
+    Instruction *instructions = malloc(sizeof(Instruction) * count);
 
-    op_s = strtok (line, " ");
-    if(op_s == NULL) {
-        return len == 0 ? 1 : -1;
-    }
-    Op op = op_from(op_s);
-    if(op == UNKNOWN_OP) {
-        debugln("Unknown OP");
-        return -1;
-    } else {
-        debug(line);
-        debug("decoded as:");
-        InstructionType type = type_of(op);
-        putc(op, output);
-        switch(type) {
-            case OP:
-                debugln("OP");
-                putc('\0', output);
-                putc('\0', output);
-                putc('\0', output);
-                break;
-            case OP_RA:
-                debugln("OP_RA");
-                put_reg(ra_s, output);
-                putc('\0', output);
-                putc('\0', output);
-                break;
-            case OP_RA_IMM:
-                debugln("OP_RA_IMM");
-                put_reg(ra_s, output);
-                imm_s = strtok(NULL, " ");
-                if(imm_s == NULL) return -1;
-                imm = strtol(imm_s, NULL, 0);
-                putc((imm & 0b1111111100000000) >> 8, output);
-                putc(imm & 0b11111111, output);
-                break;
-            case OP_RA_RB:
-                debugln("OP_RA_RB");
-                put_reg(ra_s, output);
-                put_reg(rb_s, output);
-                putc('\0', output);
-                break;
-            case OP_RA_RB_IMM:
-                debugln("OP_RA_RB_IMM");
-                put_reg(ra_s, output);
-                put_reg(rb_s, output);
-                imm_s = strtok(NULL, " ");
-                if(imm_s == NULL) return -1;
-                unsigned long v = strtol(imm_s, NULL, 0);
-                putc(imm & 0b11111111, output);
-                break;
-            case OP_RA_RB_RC:
-                debugln("OP_RA_RB_RC");
-                put_reg(ra_s, output);
-                put_reg(rb_s, output);
-                put_reg(rc_s, output);
-                break;
-            default:
-                debugln("UNKNOWN TYPE");
-                return -1;
-        }
+    for (int i = 0; i < count; i++) {
+        Instruction b = {
+                .op_ra_rb_rc={(Op)(va_arg(ap, int)), 0, 0, 0}
+        };
+        instructions[i] = b;
     }
 
-    return 1;
+    va_end(ap);
+    return instructions;
 }
 
+
+genOpCompiler      (NOP,nopCompiler)
+genOpRaRbRcCompiler(ADD,addCompiler)
+genOpRaRbRcCompiler(SUB,subCompiler)
+genOpRaRbRcCompiler(AND,andCompiler)
+genOpRaRbRcCompiler(ORR,orrCompiler)
+genOpRaRbRcCompiler(XOR,xorCompiler)
+genOpRaRbCompiler  (NOT,notCompiler)
+genOpRaRbRcCompiler(LSH,lshCompiler)
+genOpRaRbRcCompiler(ASH,ashCompiler)
+genOpRaRbRcCompiler(TCU,tcuCompiler)
+genOpRaRbRcCompiler(TCS,tcsCompiler)
+genOpRaImmCompiler (SET,setCompiler)
+genOpRaRbCompiler  (MOV,movCompiler)
+genOpRaRbCompiler  (LDW,ldwCompiler)
+genOpRaRbCompiler  (STW,stwCompiler)
+genOpRaRbCompiler  (LDB,ldbCompiler)
+genOpRaRbCompiler  (STB,stbCompiler)
+
+
+CompilerSpec instructionCompilers[] = {
+        {"NOP", nopCompiler, 1},
+        {"ADD", addCompiler, 1},
+        {"SUB", subCompiler, 1},
+        {"AND", andCompiler, 1},
+        {"ORR", orrCompiler, 1},
+        {"XOR", xorCompiler, 1},
+        {"NOT", notCompiler, 1},
+        {"LSH", lshCompiler, 1},
+        {"ASH", ashCompiler, 1},
+        {"TCU", tcuCompiler, 1},
+        {"TCS", tcsCompiler, 1},
+        {"SET", setCompiler, 1},
+        {"MOV", movCompiler, 1},
+        {"LDW", ldwCompiler, 1},
+        {"STW", stwCompiler, 1},
+        {"LDB", ldbCompiler, 1},
+        {"STB", stbCompiler, 1},
+};
+
+CompilerSpec *getstatementspec(LineStatement *s) {
+    for(size_t i = 0; i < sizeof(instructionCompilers) / sizeof(CompilerSpec); i++) {
+        if(strcmp(s->instr, instructionCompilers[i].mnemonic) == 0) {
+            return &instructionCompilers[i];
+        }
+    }
+    printf("Unknown instruction %s\n", s->instr);
+    return NULL;
+}
+
+size_t getstatementsize(LineStatement *s) {
+    if(s->instr == NULL) return 0;
+    CompilerSpec *spec = getstatementspec(s);
+    if(spec) return spec->size;
+    return 0;
+}
+
+void assemble(FILE *input, FILE *output) {
+    StatementList p = statementlfromfile(input);
+
+    // we need to calculate the offsets now
+    LineStatement *cur = p.head;
+    size_t offset = 0;
+    while(cur) {
+        cur->assembledLocation = offset;
+        offset += getstatementsize(cur) * sizeof(Instruction);
+        cur = cur->next;
+    }
+    printstatementl(&p);
+
+    // we can compile and write to file
+    cur = p.head;
+    while(cur) {
+        CompilerSpec *spec = getstatementspec(cur);
+        if(spec) {
+            Instruction *instructions = spec->compile(&p, cur);
+            fwrite(instructions, sizeof(Instruction), spec->size, output);
+            free(instructions);
+        }
+        cur = cur->next;
+    }
+
+    printf("Done.\n");
+}
 
 int main(int argc, char *argv[]) {
     if(argc != 3) {
@@ -104,31 +127,8 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    char *line = NULL;
-    size_t len = 0;
-    ssize_t nread;
+    assemble(input, output);
 
-    printf("Reading...\n");
-    while ((nread = getline(&line, &len, input)) != -1) {
-        // strip newline
-        if(nread > 0 && line[nread - 1] == '\n') {
-            line[nread - 1] = '\0';
-            nread -= 1;
-        }
-        int status = parse_instruction(line, nread, output);
-        if(status == -1) {
-            printf("Parse error: %s\n", line);
-
-            free(line);
-            fclose(input);
-            fclose(output);
-            return -1;
-        }
-    }
-
-    printf("Done.\n");
-
-    free(line);
     fclose(input);
     fclose(output);
 }

@@ -6,12 +6,13 @@
 #define REGULARVM_UTIL_H
 
 //#define DEBUG
+
 #ifdef DEBUG
-#define debug(str) printf("%s ", str)
-#define debugln(str) printf("%s\n", str)
+    #define debug(str) printf("%s ", str)
+    #define debugln(str) printf("%s\n", str)
 #endif
 #ifndef DEBUG
-#define debug(str)
+    #define debug(str)
     #define debugln(str)
 #endif
 
