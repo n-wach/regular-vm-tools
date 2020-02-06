@@ -7,7 +7,6 @@
 #include "token.h"
 #include "error.h"
 #include "../asm/statement.h"
-#include "../asm/asm.h"
 
 Result parse_to_stack(StatementList *prog, TokenStack *stack, char *exp) {
     //return 1 if valid input, 0 if not
