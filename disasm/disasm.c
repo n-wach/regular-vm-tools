@@ -19,20 +19,20 @@
     #define debugln(str)
 #endif
 
-#define fprintfOp(out, instruction, op) fprintf(out, #op)
-#define fprintfOpRa(out, instruction, op) fprintf(out, #op " %s", \
+#define fprintfOp(out, instruction, op) fprintf(out, #op "\n")
+#define fprintfOpRa(out, instruction, op) fprintf(out, #op " %s\n", \
     reg_name(instruction.op_ra.ra))
-#define fprintfOpRaImm(out, instruction, op) fprintf(out, #op " %s, %x", \
+#define fprintfOpRaImm(out, instruction, op) fprintf(out, #op " %s, 0x%x\n", \
     reg_name(instruction.op_ra_imm.ra), \
     instruction.op_ra_imm.imm)
-#define fprintfOpRaRb(out, instruction, op) fprintf(out, #op " %s, %s", \
+#define fprintfOpRaRb(out, instruction, op) fprintf(out, #op " %s, %s\n", \
     reg_name(instruction.op_ra_rb.ra), \
     reg_name(instruction.op_ra_rb.rb))
-#define fprintfOpRaRbImm(out, instruction, op) fprintf(out, #op " %s, %s, %x", \
+#define fprintfOpRaRbImm(out, instruction, op) fprintf(out, #op " %s, %s, 0x%x\n", \
     reg_name(instruction.op_ra_rb_imm.ra), \
     reg_name(instruction.op_ra_rb_imm.rb), \
     instruction.op_ra_rb_imm.imm)
-#define fprintfOpRaRbRc(out, instruction, op) fprintf(out, #op " %s, %s, %s", \
+#define fprintfOpRaRbRc(out, instruction, op) fprintf(out, #op " %s, %s, %s\n", \
     reg_name(instruction.op_ra_rb_rc.ra), \
     reg_name(instruction.op_ra_rb_rc.rb), \
     reg_name(instruction.op_ra_rb_rc.rc))
@@ -99,43 +99,3 @@ int decode_instruction(const Instruction i, FILE *out) {
     return 1;
 }
 
-
-int main(int argc, char *argv[]) {
-    if(argc != 3) {
-        printf("Usage: %s [input] [output]\n", argv[0]);
-        return -1;
-    }
-    FILE *input = fopen(argv[1], "rb");
-    if(input == NULL) {
-        printf("Invalid input file");
-        return -1;
-    }
-
-    FILE *output = fopen(argv[2], "w");
-    if(output == NULL) {
-        printf("Invalid output file");
-        fclose(input);
-        return -1;
-    }
-
-
-    printf("Reading...\n");
-    while (1) {
-        Instruction i;
-        fread(&i, 4, 1, input);
-        if(feof(input)) break;
-        int status = decode_instruction(i, output);
-        if(status == -1) {
-            printf("Decode error %x %x %x %x", i.op_ra_rb_rc.op, 
-                    i.op_ra_rb_rc.ra, i.op_ra_rb_rc.rb, i.op_ra_rb_rc.rc);
-            fclose(input);
-            fclose(output);
-            return -1;
-        }
-    }
-
-    printf("Done.\n");
-
-    fclose(input);
-    fclose(output);
-}

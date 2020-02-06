@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <string.h>
 #include "../asm/statement.h"
-#include "../asm/calc/calc.h"
+#include "../calc/calc.h"
 #include "regs.h"
 
 char reg_mnemonics[][4] = {
@@ -43,7 +43,7 @@ char reg_mnemonics[][4] = {
         "sp"
 };
 
-uint8_t imm_from(StatementList *prog, char *exp) {
+uint16_t imm_from(StatementList *prog, char *exp) {
     return eval(prog, exp);
 }
 
@@ -57,7 +57,7 @@ Reg reg_from(char *name) {
         return UNKNOWN_REG;
     }
     for(int i = MIN_REG; i <= MAX_REG; i++) {
-        if(strcmp(name, reg_mnemonics[i]) == 0) {
+        if(strcmp(name, &reg_mnemonics[i][0]) == 0) {
             return (Reg) i;
         }
     }

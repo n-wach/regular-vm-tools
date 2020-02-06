@@ -6,10 +6,11 @@
 #define ASSEMBLER_REGS_H
 
 #include <stdint.h>
-#include "../asm/calc/calc.h"
+#include "../calc/calc.h"
 
-#define MIN_REG 0x0
-#define MAX_REG 0x1
+#define MIN_REG PC
+#define MAX_REG SP
+
 typedef enum __attribute__((__packed__)) reg {
     PC=0x00,
     R1=0x01,
@@ -48,7 +49,7 @@ typedef enum __attribute__((__packed__)) reg {
 
 extern char reg_mnemonics[][4];
 
-uint8_t imm_from(StatementList *prog, char *exp);
+uint16_t imm_from(StatementList *prog, char *exp);
 
 char *reg_name(Reg reg);
 

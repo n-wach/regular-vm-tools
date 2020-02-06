@@ -6,114 +6,90 @@
 #include <stdio.h>
 #include <malloc.h>
 #include "vm.h"
+#include "../common/instructions.h"
+#include "../disasm/disasm.h"
 
 VMState state;
-u_int8_t *memory;
+uint8_t *memory;
 #define MEM_SIZE 0x100000
 
-int run_instr(const u_int8_t instr[4]) {
-    Op op = (Op) instr[0];
-    Reg ra = UNKNOWN_REG;
-    Reg rb = UNKNOWN_REG;
-    Reg rc = UNKNOWN_REG;
-    int imm = 0;
-    u_int32_t tmp = 0;
-
-    if(op < MIN_OP || op > MAX_OP) {
-        debugln("Unknown OP");
-        return -1;
-    } else {
-        InstructionType type = type_of(op);
-        switch(type) {
-            case OP:
-                break;
-            case OP_RA:
-                ra = instr[1];
-                break;
-            case OP_RA_IMM:
-                ra = instr[1];
-                imm = (instr[2] << 8) | instr[3];
-                break;
-            case OP_RA_RB:
-                ra = instr[1];
-                rb = instr[2];
-                break;
-            case OP_RA_RB_IMM:
-                ra = instr[1];
-                rb = instr[2];
-                imm = instr[3];
-                break;
-            case OP_RA_RB_RC:
-                ra = instr[1];
-                rb = instr[2];
-                rc = instr[3];
-                break;
-            default:
-                break;
-        }
-        switch(op) {
-            case NOP:
-                // nothing
-                break;
-            case ADD:
-                state.reg[ra] = state.reg[rb] + state.reg[rc];
-                break;
-            case SUB:
-                state.reg[ra] = state.reg[rb] - state.reg[rc];
-                break;
-            case AND:
-                state.reg[ra] = state.reg[rb] & state.reg[rc];
-                break;
-            case ORR:
-                state.reg[ra] = state.reg[rb] | state.reg[rc];
-                break;
-            case XOR:
-                state.reg[ra] = state.reg[rb] ^ state.reg[rc];
-                break;
-            case NOT:
-                state.reg[ra] = ~state.reg[rb];
-                break;
-            case LSH:
-                // not supported yet
-                break;
-            case ASH:
-                // not supported yet
-                break;
-            case TCU:
-                state.reg[ra] = sign(state.reg[rb] - state.reg[rc]);
-                break;
-            case TCS:
-                // not supported yet
-                break;
-            case SET:
-                state.reg[ra] = imm;
-                break;
-            case MOV:
-                state.reg[ra] = state.reg[rb];
-                break;
-            case LDW:
-                tmp = state.reg[rb];
-                state.reg[ra] = memory[tmp] | memory[tmp + 1] << 8 | memory[tmp + 2] << 16 | memory[tmp + 3] << 24;
-                break;
-            case STW:
-                tmp = state.reg[rb];
-                memory[state.reg[ra]] = tmp & 0b11111111;
-                memory[state.reg[ra + 1]] = (tmp & (0b11111111 << 8)) >> 8;
-                memory[state.reg[ra + 2]] = (tmp & (0b11111111 << 16)) >> 16;
-                memory[state.reg[ra + 3]] = (tmp & (0b11111111 << 24)) >> 24;
-                break;
-            case LDB:
-                state.reg[ra] &= 0b11111111111111111111111100000000;
-                state.reg[ra] |= memory[state.reg[rb]];
-                break;
-            case STB:
-                memory[state.reg[rb]] = state.reg[ra] & 0b11111111;
-                break;
-            case UNKNOWN_OP:
-                break;
-            default:
-                break;
-        }
+int run_instr(const Instruction instr) {
+    Op op = instr.op.op;
+    uint32_t tmp = 0;
+    switch(op) {
+        case NOP:
+            // nothing
+            break;
+        case ADD:
+            state.reg[instr.op_ra_rb_rc.ra] = state.reg[instr.op_ra_rb_rc.rb] + state.reg[instr.op_ra_rb_rc.rc];
+            break;
+        case SUB:
+            state.reg[instr.op_ra_rb_rc.ra] = state.reg[instr.op_ra_rb_rc.rb] - state.reg[instr.op_ra_rb_rc.rc];
+            break;
+        case AND:
+            state.reg[instr.op_ra_rb_rc.ra] = state.reg[instr.op_ra_rb_rc.rb] & state.reg[instr.op_ra_rb_rc.rc];
+            break;
+        case ORR:
+            state.reg[instr.op_ra_rb_rc.ra] = state.reg[instr.op_ra_rb_rc.rb] | state.reg[instr.op_ra_rb_rc.rc];
+            break;
+        case XOR:
+            state.reg[instr.op_ra_rb_rc.ra] = state.reg[instr.op_ra_rb_rc.rb] ^ state.reg[instr.op_ra_rb_rc.rc];
+            break;
+        case NOT:
+            state.reg[instr.op_ra_rb.ra] = ~state.reg[instr.op_ra_rb.rb];
+            break;
+        case LSH:
+            tmp = (int) state.reg[instr.op_ra_rb_rc.rc];
+            if(tmp >= 0) {
+                state.reg[instr.op_ra_rb_rc.ra] = state.reg[instr.op_ra_rb_rc.rb] << tmp;
+            } else {
+                state.reg[instr.op_ra_rb_rc.ra] = state.reg[instr.op_ra_rb_rc.rb] >> -tmp;
+            }
+            break;
+        case ASH:
+            tmp = (int) state.reg[instr.op_ra_rb_rc.rc];
+            if(tmp >= 0) {
+                state.reg[instr.op_ra_rb_rc.ra] = ((int) state.reg[instr.op_ra_rb_rc.rb]) << tmp;
+            } else {
+                state.reg[instr.op_ra_rb_rc.ra] = ((int) state.reg[instr.op_ra_rb_rc.rb]) >> -tmp;
+            }
+            break;
+        case TCU:
+            state.reg[instr.op_ra_rb_rc.ra] = sign(state.reg[instr.op_ra_rb_rc.rc] - state.reg[instr.op_ra_rb_rc.rc]);
+            break;
+        case TCS:
+            state.reg[instr.op_ra_rb_rc.ra] = sign((int) state.reg[instr.op_ra_rb_rc.rc] - (int) state.reg[instr.op_ra_rb_rc.rc]);
+            break;
+        case SET:
+            state.reg[instr.op_ra_imm.ra] = instr.op_ra_imm.imm;
+            break;
+        case MOV:
+            state.reg[instr.op_ra_rb.ra] = state.reg[instr.op_ra_rb.rb];
+            break;
+        case LDW:
+            state.reg[instr.op_ra_rb.ra] =
+                    memory[state.reg[instr.op_ra_rb.ra] + 0] << 0 |
+                    memory[state.reg[instr.op_ra_rb.ra] + 1] << 8 |
+                    memory[state.reg[instr.op_ra_rb.ra] + 2] << 16 |
+                    memory[state.reg[instr.op_ra_rb.ra] + 3] << 24;
+            break;
+        case STW:
+            memory[state.reg[instr.op_ra_rb.ra] + 0] = state.reg[instr.op_ra_rb.rb] >> 0 & 0xff;
+            memory[state.reg[instr.op_ra_rb.ra] + 1] = state.reg[instr.op_ra_rb.rb] >> 8 & 0xff;
+            memory[state.reg[instr.op_ra_rb.ra] + 2] = state.reg[instr.op_ra_rb.rb] >> 16 & 0xff;
+            memory[state.reg[instr.op_ra_rb.ra] + 3] = state.reg[instr.op_ra_rb.rb] >> 24 & 0xff;
+            break;
+            break;
+        case LDB:
+            state.reg[instr.op_ra_rb.ra] &= memory[state.reg[instr.op_ra_rb.rb]] & 0xff;
+            break;
+        case STB:
+            memory[state.reg[instr.op_ra_rb.ra]] &= state.reg[instr.op_ra_rb.rb] & 0xff;
+            break;
+        case UNKNOWN_OP:
+            break;
+        default:
+            break;
     }
 
     return 1;
@@ -126,27 +102,34 @@ void init_vm() {
 }
 
 void print_vm() {
-    printf("VM STATE:\n");
+    printf("Registers:\n");
     for(int i = 0; i <= MAX_REG; i++) {
         printf("%s: 0x%x \t", reg_name(i), state.reg[i]);
         if(i % 4 == 3) {
             printf("\n");
         }
     }
-    printf("Next OP: %s\n", op_name(memory[state.reg[0]]));
+    printf("Instructions:\n");
+    for(int i = -2; i < 3; i++) {
+        uint32_t pc = state.reg[0];
+        if(i == 0) {
+            printf(">>");
+            decode_instruction(((Instruction *) &memory[pc])[0], stdout);
+        } else {
+            if(i > 0 || ((int) pc + (i * 4)) >= 0) {
+                printf("  ");
+                decode_instruction(((Instruction *) &memory[pc + i * 4])[0], stdout);
+            }
+        }
+    }
     printf("Press Enter to Run Next Instruction");
     getchar();
 }
 
 void step_vm() {
-    char instr[4];
-    u_int32_t pc = state.reg[0];
-    instr[0] = memory[pc];
-    instr[1] = memory[pc + 1];
-    instr[2] = memory[pc + 2];
-    instr[3] = memory[pc + 3];
+    Instruction i = ((Instruction *) &memory[state.reg[0]])[0];
     state.reg[0] += 4;
-    run_instr(instr);
+    run_instr(i);
 }
 
 void run_vm() {

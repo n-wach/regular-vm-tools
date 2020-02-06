@@ -5,7 +5,7 @@
 #ifndef REGULARVM_CALC_H
 #define REGULARVM_CALC_H
 
-#include "../statement.h"
+#include "../asm/statement.h"
 
 int eval(StatementList *prog, char *exp);
 

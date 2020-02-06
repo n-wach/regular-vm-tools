@@ -43,6 +43,12 @@ genOpRaRbCompiler  (STW,stwCompiler)
 genOpRaRbCompiler  (LDB,ldbCompiler)
 genOpRaRbCompiler  (STB,stbCompiler)
 
+Instruction* jmpiCompiler(StatementList *prog, LineStatement *s) {
+    Instruction *set = get_instructions(1, (int) SET);
+    set->op_ra_imm.ra = PC;
+    set->op_ra_imm.imm = imm_from(prog, s->params[0]);
+    return set;
+}
 
 CompilerSpec instructionCompilers[] = {
         {"NOP", nopCompiler, 1},
@@ -62,9 +68,11 @@ CompilerSpec instructionCompilers[] = {
         {"STW", stwCompiler, 1},
         {"LDB", ldbCompiler, 1},
         {"STB", stbCompiler, 1},
+        {"JMPI", jmpiCompiler, 1},
 };
 
 CompilerSpec *getstatementspec(LineStatement *s) {
+    if(s->instr == NULL) return NULL;
     for(size_t i = 0; i < sizeof(instructionCompilers) / sizeof(CompilerSpec); i++) {
         if(strcmp(s->instr, instructionCompilers[i].mnemonic) == 0) {
             return &instructionCompilers[i];

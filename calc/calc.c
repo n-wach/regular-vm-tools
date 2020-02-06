@@ -6,8 +6,8 @@
 
 #include "token.h"
 #include "error.h"
-#include "../statement.h"
-#include "../asm.h"
+#include "../asm/statement.h"
+#include "../asm/asm.h"
 
 Result parse_to_stack(StatementList *prog, TokenStack *stack, char *exp) {
     //return 1 if valid input, 0 if not
@@ -19,11 +19,10 @@ Result parse_to_stack(StatementList *prog, TokenStack *stack, char *exp) {
         if(c == '\0' || c == '\n') {
             break;
         } else if(isdigit(c) || (c == '-' && isdigit(exp[i+1]) && should_neg_mean_num)) {
-            int value = atoi(exp + i);
+            char * end;
+            size_t value = strtol(&exp[i], &end, 0);
             push_value(stack, value);
-            while (isdigit(exp[i + 1])) {
-                i++;
-            }
+            i = end - exp - 1;
             should_neg_mean_num = false;
         } else if(c == LBL) {
             char *start = &exp[i + 1];
