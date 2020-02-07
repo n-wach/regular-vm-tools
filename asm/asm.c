@@ -18,7 +18,6 @@ void assemble(FILE *input, FILE *output) {
         offset += getstatementsize(cur) * sizeof(Instruction);
         cur = cur->next;
     }
-    printstatementl(&p);
 
     // we can compile and write to file
     cur = p.head;
@@ -31,30 +30,4 @@ void assemble(FILE *input, FILE *output) {
         }
         cur = cur->next;
     }
-
-    printf("Done.\n");
-}
-
-int main(int argc, char *argv[]) {
-    if(argc != 3) {
-        printf("Usage: %s [input] [output]\n", argv[0]);
-        return -1;
-    }
-    FILE *input = fopen(argv[1], "r");
-    if(input == NULL) {
-        printf("Invalid input file");
-        return -1;
-    }
-
-    FILE *output = fopen(argv[2], "wb");
-    if(output == NULL) {
-        printf("Invalid output file");
-        fclose(input);
-        return -1;
-    }
-
-    assemble(input, output);
-
-    fclose(input);
-    fclose(output);
 }

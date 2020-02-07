@@ -10,15 +10,15 @@ typedef enum token_type {
     VALUE
 } TokenType;
 
-typedef enum operator {
-    PLUS='+',
-    MINUS='-',
-    MUL='*',
-    DIV='/',
-    L_P='(',
-    R_P=')',
-    LBL='$',
-} Operator;
+typedef enum expressionOperator {
+    EXP_ADD='+',
+    EXP_SUB='-',
+    EXP_MUL='*',
+    EXP_DIV='/',
+    EXP_LP='(',
+    EXP_RP=')',
+    EXP_LBL='$',
+} ExpressionOperator;
 
 typedef struct token_node {
     TokenType type;
@@ -36,7 +36,7 @@ void push(TokenStack *stack, TokenNode* node);
 
 TokenNode* make_node(int value, TokenType type);
 
-void push_operator(TokenStack *stack, Operator op);
+void push_operator(TokenStack *stack, ExpressionOperator op);
 
 void push_value(TokenStack *stack, int value);
 

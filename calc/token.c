@@ -24,7 +24,7 @@ TokenNode* make_node(int value, TokenType type) {
     return new_token;
 }
 
-void push_operator(TokenStack *stack, Operator op) {
+void push_operator(TokenStack *stack, ExpressionOperator op) {
     push(stack, make_node(op, OPERATOR));
 }
 

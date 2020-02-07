@@ -8,9 +8,8 @@
 #include "error.h"
 #include "../asm/statement.h"
 
-Result parse_to_stack(StatementList *prog, TokenStack *stack, char *exp) {
-    //return 1 if valid input, 0 if not
-    Result result = {NONE};
+ExpressionResult parse_to_stack(StatementList *prog, TokenStack *stack, char *exp) {
+    ExpressionResult result = {EXP_ERR_NONE};
     bool should_neg_mean_num = true;
     int paren_depth = 0;
     for(int i = 0; ; i++) {
@@ -23,7 +22,7 @@ Result parse_to_stack(StatementList *prog, TokenStack *stack, char *exp) {
             push_value(stack, value);
             i = end - exp - 1;
             should_neg_mean_num = false;
-        } else if(c == LBL) {
+        } else if(c == EXP_LBL) {
             char *start = &exp[i + 1];
             while (isalnum(exp[i + 1])) {
                 i++;
@@ -31,21 +30,26 @@ Result parse_to_stack(StatementList *prog, TokenStack *stack, char *exp) {
             char end = exp[i + 1];
             exp[i + 1] = '\0';
 
-            push_value(stack, evallabel(prog, start));
+            LineStatement *line = findLabel(prog, start);
+            if(line == NULL) {
+                result.error = EXP_ERR_UNKNOWN_LBL;
+                return result;
+            }
+            push_value(stack, line->assembledLocation);
 
             exp[i + 1] = end;
 
-        } else if(c == PLUS || c == MINUS || c == MUL || c == DIV) {
+        } else if(c == EXP_ADD || c == EXP_SUB || c == EXP_MUL || c == EXP_DIV) {
             push_operator(stack, c);
             should_neg_mean_num = true;
-        } else if(c == L_P) {
+        } else if(c == EXP_LP) {
             paren_depth++;
             push_operator(stack, c);
             should_neg_mean_num = true;
-        } else if(c == R_P) {
+        } else if(c == EXP_RP) {
             paren_depth--;
             if(paren_depth < 0) {
-                result.error = EXTRA_R_P;
+                result.error = EXP_ERR_EXTRA_RP;
                 return result;
             }
             push_operator(stack, c);
@@ -54,21 +58,21 @@ Result parse_to_stack(StatementList *prog, TokenStack *stack, char *exp) {
             //skip
         } else {
             // characters can only be operators, numbers or spaces
-            result.error = INVALID_CHAR;
+            result.error = EXP_ERR_INVALID_CHAR;
             result.value = c;
             return result;
         }
     }
     if(paren_depth > 0) {
-        result.error = EXTRA_L_P;
+        result.error = EXP_ERR_EXTRA_LP;
         return result;
     }
     reverse(stack);
     return result;
 }
 
-Result eval_postfix(TokenStack *stack) {
-    Result result = {NONE};
+ExpressionResult eval_postfix(TokenStack *stack) {
+    ExpressionResult result = {EXP_ERR_NONE};
 
     TokenStack temp = {NULL};
     TokenNode *v1 = NULL;
@@ -80,29 +84,29 @@ Result eval_postfix(TokenStack *stack) {
         } else {
             v1 = pop(&temp);
             if(v1 == NULL || v1->type != VALUE) {
-                result.error = MISSING_VALUE;
+                result.error = EXP_ERR_MISSING_VALUE;
                 result.value = n->value;
                 return result;
             }
             v2 = pop(&temp);
             if(v2 == NULL || v2->type != VALUE) {
-                result.error = MISSING_VALUE;
+                result.error = EXP_ERR_MISSING_VALUE;
                 result.value = n->value;
                 return result;
             }
             switch(n->value) {
-                case PLUS:
+                case EXP_ADD:
                     push_value(&temp, v2->value + v1->value);
                     break;
-                case MINUS:
+                case EXP_SUB:
                     push_value(&temp, v2->value - v1->value);
                     break;
-                case MUL:
+                case EXP_MUL:
                     push_value(&temp, v2->value * v1->value);
                     break;
-                case DIV:
+                case EXP_DIV:
                     if(v1->value == 0) {
-                        result.error = DIVIDE_BY_ZERO;
+                        result.error = EXP_ERR_DIVIDE_BY_ZERO;
                         return result;
                     }
                     push_value(&temp, v2->value / v1->value);
@@ -114,7 +118,7 @@ Result eval_postfix(TokenStack *stack) {
         }
     }
     if(temp.top == NULL) {
-        result.error = EMPTY_EXPRESSION;
+        result.error = EXP_ERR_EMPTY_EXPRESSION;
         return result;
     } else {
         TokenNode *r = pop(&temp);
@@ -123,7 +127,7 @@ Result eval_postfix(TokenStack *stack) {
     }
     if(temp.top != NULL) {
         TokenNode *n;
-        result.error = EXTRA_VALUE;
+        result.error = EXP_ERR_EXTRA_VALUE;
         while(temp.top != NULL) {
             n = pop(&temp);
             result.value = n->value;
@@ -134,49 +138,35 @@ Result eval_postfix(TokenStack *stack) {
     return result;
 }
 
-void print_stack(TokenStack *stack) {
-    TokenNode *head = stack->top;
-    while(head != NULL) {
-        if(head->type == VALUE) {
-            printf("%i", head->value);
-        } else {
-            printf("%c", head->value);
-        }
-        head = head->next;
-        printf(" ");
-    }
-    printf("\n");
-}
-
 int precedence(int op) {
     switch(op) {
-        case PLUS: return 2;
-        case MINUS: return 2;
-        case MUL: return 3;
-        case DIV: return 3;
+        case EXP_ADD: return 2;
+        case EXP_SUB: return 2;
+        case EXP_MUL: return 3;
+        case EXP_DIV: return 3;
         default: return 0;
     }
 }
 
-Result shunting_yard(TokenStack *postfixOut, TokenStack *algebraicInput) {
-    Result result = {NONE};
+ExpressionResult shunting_yard(TokenStack *postfixOut, TokenStack *algebraicInput) {
+    ExpressionResult result = {EXP_ERR_NONE};
     TokenStack operatorStack = {NULL};
     while(algebraicInput->top != NULL) {
         TokenNode *token = pop(algebraicInput);
         if(token->type == VALUE) {
             push(postfixOut, token);
-        } else if (token->value == L_P){
+        } else if (token->value == EXP_LP){
             // Left paren
             push(&operatorStack, token);
-        } else if (token->value == R_P) {
+        } else if (token->value == EXP_RP) {
             // Right paren
             while(true) {
                 if(operatorStack.top == NULL) {
-                    result.error = EXTRA_R_P;
+                    result.error = EXP_ERR_EXTRA_RP;
                     return result;
                 }
                 TokenNode *op = pop(&operatorStack);
-                if(op->value == L_P) {
+                if(op->value == EXP_LP) {
                     free(op);
                     break;
                 };
@@ -184,10 +174,10 @@ Result shunting_yard(TokenStack *postfixOut, TokenStack *algebraicInput) {
             }
             free(token);
         } else {
-            // Operator - ADD, SUB, MUL, DIV
+            // all other tokens
             while(operatorStack.top != NULL) {
                 TokenNode *op = operatorStack.top;
-                if(op->value == L_P) break;
+                if(op->value == EXP_LP) break;
                 int stack_p = precedence(op->value);
                 int new_p = precedence(token->value);
                 if(new_p > stack_p) break;
@@ -203,40 +193,27 @@ Result shunting_yard(TokenStack *postfixOut, TokenStack *algebraicInput) {
 }
 
 
-Result calc(StatementList *prog, char *exp) {
+ExpressionResult calc(StatementList *prog, char *exp) {
     // Turns algebraic string into token stack in same order
     TokenStack input_stack = {NULL};
-    Result result = {NONE};
-
+    ExpressionResult result;
     result = parse_to_stack(prog, &input_stack, exp);
-    if(result.error != NONE){
-        return result;
-    }
-    //printf("Input: ");
-    //print_stack(&input_stack);
+    if(result.error != EXP_ERR_NONE) return result;
 
     // Use shunting yard to change order to postfix
     TokenStack postfix = {NULL};
     result = shunting_yard(&postfix, &input_stack);
-    if(result.error != NONE){
-        return result;
-    }
+    if(result.error != EXP_ERR_NONE) return result;
     reverse(&postfix);
-
-    //printf("Postfix: ");
-    //print_stack(&postfix);
 
     // Evaluate postfix
     result = eval_postfix(&postfix);
-    if(result.error != NONE){
-        return result;
-    }
     return result;
 }
 
 int eval(StatementList *prog, char *exp) {
-    Result r = calc(prog, exp);
-    if(r.error == NONE) {
+    ExpressionResult r = calc(prog, exp);
+    if(r.error == EXP_ERR_NONE) {
         return r.value;
     } else {
         print_error(r);

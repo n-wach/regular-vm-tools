@@ -5,12 +5,34 @@
 #ifndef REGULARVM_VM_H
 #define REGULARVM_VM_H
 
+#include <stdbool.h>
 #include "../common/regs.h"
 #include "../common/ops.h"
 #include "../common/util.h"
+#include "../common/instructions.h"
 
-typedef struct vmstate {
+#define MEM_SIZE 0x100000
+
+typedef struct vm {
     uint32_t reg[MAX_REG];
-} VMState;
+    uint8_t *memory;
+    bool halted;
+} VM;
+
+uint8_t vmRegR(VM *vm, Reg reg);
+void vmRegW(VM *vm, Reg reg, uint32_t value);
+
+uint8_t vmMemR(VM *vm, uint32_t address);
+uint8_t *vmMemRP(VM *vm, uint32_t address);
+void vmMemW(VM *vm, uint32_t address, uint8_t value);
+
+void vmInit(VM *vm);
+void vmRun(VM *vm);
+void vmStep(VM *vm);
+Instruction vmCurInstr(VM *vm);
+Instruction vmRelInstr(VM *vm, int offset);
+void vmExecInstr(VM *vm, Instruction instr);
+void vmPrint(VM *vm);
+void vmFree(VM *vm);
 
 #endif //REGULARVM_VM_H

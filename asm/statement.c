@@ -49,26 +49,8 @@ LineStatement* plstatement(char *line) {
     return s;
 }
 
-void printlstatement(LineStatement *s) {
-    printf("0x%x: ", s->assembledLocation);
-    if(s->label) {
-        printf("%s: ", s->label);
-    }
-    if(s->instr) {
-        printf("%s", s->instr);
-    }
-    for(int i = 0; s->params[i] && i < 4; i++) {
-        if(i != 0) {
-            printf(",");
-        }
-        printf(" %s", s->params[i]);
-    }
-    printf("\n");
-}
-
 StatementList statementlfromfile(FILE *input) {
     StatementList sl = {NULL, NULL};
-    printf("Parsing statements\n");
     char *line = NULL;
     size_t len = 0;
     ssize_t nread;
@@ -88,18 +70,18 @@ StatementList statementlfromfile(FILE *input) {
     return sl;
 }
 
-unsigned int evallabel(StatementList *prog, char *label) {
+LineStatement *findLabel(StatementList *prog, char *label) {
     LineStatement *cur = prog->head;
+    if(label == NULL) return NULL;
     while(cur) {
         if(cur->label) {
             if(strcmp(label, cur->label) == 0) {
-                return cur->assembledLocation;
+                return cur;
             }
         }
         cur = cur->next;
     }
-    printf("Could not find label: %s", label);
-    return 0;
+    return NULL;
 }
 
 void printstatementl(StatementList *sl) {
@@ -108,4 +90,21 @@ void printstatementl(StatementList *sl) {
         printlstatement(cur);
         cur = cur->next;
     }
+}
+
+void printlstatement(LineStatement *s) {
+    printf("0x%x:\t", s->assembledLocation);
+    if(s->label) {
+        printf("%s: ", s->label);
+    }
+    if(s->instr) {
+        printf("%s", s->instr);
+    }
+    for(int i = 0; s->params[i] && i < 4; i++) {
+        if(i != 0) {
+            printf(",");
+        }
+        printf(" %s", s->params[i]);
+    }
+    printf("\n");
 }

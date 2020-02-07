@@ -5,22 +5,23 @@
 #ifndef REGULARVM_ERROR_H
 #define REGULARVM_ERROR_H
 
-typedef enum error_type {
-    NONE,
-    INVALID_CHAR,
-    EXTRA_R_P,
-    EXTRA_L_P,
-    MISSING_VALUE,
-    EXTRA_VALUE,
-    DIVIDE_BY_ZERO,
-    EMPTY_EXPRESSION,
-} Error;
+typedef enum expressionError {
+    EXP_ERR_NONE,
+    EXP_ERR_INVALID_CHAR,
+    EXP_ERR_EXTRA_RP,
+    EXP_ERR_EXTRA_LP,
+    EXP_ERR_MISSING_VALUE,
+    EXP_ERR_EXTRA_VALUE,
+    EXP_ERR_DIVIDE_BY_ZERO,
+    EXP_ERR_EMPTY_EXPRESSION,
+    EXP_ERR_UNKNOWN_LBL,
+} ExpressionError;
 
-typedef struct result {
-    Error error;
+typedef struct expressionResult {
+    ExpressionError error;
     int value;
-} Result;
+} ExpressionResult;
 
-void print_error(Result res);
+void print_error(ExpressionResult res);
 
 #endif //REGULARVM_ERROR_H

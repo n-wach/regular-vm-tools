@@ -2,10 +2,8 @@
 // Created by me on 2/5/20.
 //
 
-#include <stdint.h>
+#include <stdio.h>
 #include <string.h>
-#include "../asm/statement.h"
-#include "../calc/calc.h"
 #include "regs.h"
 
 char reg_mnemonics[][4] = {
@@ -42,10 +40,6 @@ char reg_mnemonics[][4] = {
         "at1",
         "sp"
 };
-
-uint16_t imm_from(StatementList *prog, char *exp) {
-    return eval(prog, exp);
-}
 
 char *reg_name(Reg reg) {
     return reg_mnemonics[reg];

@@ -3,8 +3,8 @@
 //
 
 #include "compiler.h"
+#include "../calc/calc.h"
 #include <string.h>
-
 
 genOpCompiler      (NOP,nopCompiler)
 genOpRaRbRcCompiler(ADD,addCompiler)
@@ -24,32 +24,18 @@ genOpRaRbCompiler  (STW,stwCompiler)
 genOpRaRbCompiler  (LDB,ldbCompiler)
 genOpRaRbCompiler  (STB,stbCompiler)
 
-
 Instruction* jmpiCompiler(StatementList *prog, LineStatement *s) {
-    Instruction *set = get_instructions(1, (int) SET);
-    set->op_ra_imm.ra = PC;
-    set->op_ra_imm.imm = imm_from(prog, s->params[0]);
-    return set;
+    init_instrs(1)
+    put_op_ra_imm(SET, PC, imm(0))
+    ret_instrs()
 }
 
-
 Instruction* pushCompiler(StatementList *prog, LineStatement *s) {
-    Instruction *instrs = get_instructions(3, (int) STW, (int) SET, (int) ADD);
-
-    // stw sp ra
-    instrs[0].op_ra_rb.ra = SP;
-    instrs[0].op_ra_rb.rb = reg_from(s->params[0]);
-
-    // set at0 8
-    instrs[1].op_ra_imm.ra = AT0;
-    instrs[1].op_ra_imm.imm = 4;
-
-    // add sp sp at0
-    instrs[2].op_ra_rb_rc.ra = SP;
-    instrs[2].op_ra_rb_rc.rb = SP;
-    instrs[2].op_ra_rb_rc.rc = AT0;
-
-    return instrs;
+    init_instrs(3)
+    put_op_ra_rb(STW, SP, reg(0))
+    put_op_ra_imm(SET, AT0, 4)
+    put_op_ra_rb_rc(ADD, SP, SP, AT0)
+    ret_instrs()
 }
 
 CompilerSpec instructionCompilers[] = {
@@ -74,7 +60,6 @@ CompilerSpec instructionCompilers[] = {
         {"PUSH", pushCompiler, 3},
 };
 
-
 CompilerSpec *getstatementspec(LineStatement *s) {
     if(s->instr == NULL) return NULL;
     for(size_t i = 0; i < sizeof(instructionCompilers) / sizeof(CompilerSpec); i++) {
@@ -93,20 +78,6 @@ size_t getstatementsize(LineStatement *s) {
     return 0;
 }
 
-
-Instruction *get_instructions(int count, ...) {
-    va_list ap;
-    va_start (ap, count);
-
-    Instruction *instructions = malloc(sizeof(Instruction) * count);
-
-    for (int i = 0; i < count; i++) {
-        Instruction b = {
-                .op_ra_rb_rc={(Op)(va_arg(ap, int)), 0, 0, 0}
-        };
-        instructions[i] = b;
-    }
-
-    va_end(ap);
-    return instructions;
+int imm_from(StatementList *prog, char *exp) {
+    return eval(prog, exp);
 }

@@ -12,6 +12,7 @@
 #include "regs.h"
 
 typedef union instruction {
+    uint32_t ui32;
     struct {
         Op op;
     } op;

@@ -26,7 +26,7 @@ typedef struct statementList {
 
 StatementList statementlfromfile(FILE *input);
 
-unsigned int evallabel(StatementList *prog, char *label);
+LineStatement *findLabel(StatementList *prog, char *label);
 
 void printstatementl(StatementList *sl);
 
