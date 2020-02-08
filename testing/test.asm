@@ -1,12 +1,12 @@
-main: NOP
-NOP
-NOP ;dumb comment
-ADD r3, r3, r3
-ADD r4, r3, r3
-ADD r5, r3, r3
-JMPI $main + 4 ; jump to main plus 1 instruction
-PUSH pc
-ADD r6, r3, r3
-ADD r7, r3, r3
-ADD r8, r3, r3
+init:
+SET r1, 10 ; we gonna sum the numbers from 1 to 10 into r2
+
+loop:
+ADD r2, r2, r1 ; add cur
+DEC r1
+JZ r1, $end
+JMPI $loop
+
+end:
+HALT
 

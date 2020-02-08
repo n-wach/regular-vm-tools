@@ -11,6 +11,7 @@ LineStatement* plstatement(char *line) {
 
     // first chop off comments
     size_t end = strcspn(linecpy, ";");
+    while(linecpy[end - 1] == ' ') end--;
     linecpy[end] = '\0';
 
     // get rid of leading spaces

@@ -11,15 +11,16 @@
 #include "../common/util.h"
 #include "../common/instructions.h"
 
-#define MEM_SIZE 0x100000
+#define MEM_SIZE 0x10000
+#define STACK_BASE MEM_SIZE - 0x100
 
 typedef struct vm {
-    uint32_t reg[MAX_REG];
+    uint32_t reg[MAX_REG + 1];
     uint8_t *memory;
     bool halted;
 } VM;
 
-uint8_t vmRegR(VM *vm, Reg reg);
+uint32_t vmRegR(VM *vm, Reg reg);
 void vmRegW(VM *vm, Reg reg, uint32_t value);
 
 uint8_t vmMemR(VM *vm, uint32_t address);

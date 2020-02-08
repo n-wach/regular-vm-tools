@@ -30,11 +30,68 @@ Instruction* jmpiCompiler(StatementList *prog, LineStatement *s) {
     ret_instrs()
 }
 
+Instruction* addiCompiler(StatementList *prog, LineStatement *s) {
+    init_instrs(2)
+    put_op_ra_imm(SET, AT0, imm(1))
+    put_op_ra_rb_rc(ADD, reg(0), reg(0), AT0)
+    ret_instrs()
+}
+
+Instruction* subiCompiler(StatementList *prog, LineStatement *s) {
+    init_instrs(2)
+    put_op_ra_imm(SET, AT0, imm(1))
+    put_op_ra_rb_rc(SUB, reg(0), reg(0), AT0)
+    ret_instrs()
+}
+
+Instruction* incCompiler(StatementList *prog, LineStatement *s) {
+    init_instrs(2)
+    put_op_ra_imm(SET, AT0, 1)
+    put_op_ra_rb_rc(ADD, reg(0), reg(0), AT0)
+    ret_instrs()
+}
+
+Instruction* decCompiler(StatementList *prog, LineStatement *s) {
+    init_instrs(2)
+    put_op_ra_imm(SET, AT0,  1)
+    put_op_ra_rb_rc(SUB, reg(0), reg(0), AT0)
+    ret_instrs()
+}
+
 Instruction* pushCompiler(StatementList *prog, LineStatement *s) {
     init_instrs(3)
     put_op_ra_rb(STW, SP, reg(0))
     put_op_ra_imm(SET, AT0, 4)
+    put_op_ra_rb_rc(SUB, SP, SP, AT0)
+    ret_instrs()
+}
+
+Instruction* popCompiler(StatementList *prog, LineStatement *s) {
+    init_instrs(3)
+    put_op_ra_imm(SET, AT0, 4)
     put_op_ra_rb_rc(ADD, SP, SP, AT0)
+    put_op_ra_rb(LDW, reg(0), SP)
+    ret_instrs()
+}
+
+Instruction* jzCompiler(StatementList *prog, LineStatement *s) {
+    init_instrs(10)
+    put_op_ra_imm(SET, AT0, 0)
+    put_op_ra_rb_rc(TCU, AT1, reg(0), AT0)
+    put_op_ra_imm(SET, AT0, 4)
+    put_op_ra_rb_rc(ADD, AT1, AT1, AT1)
+    put_op_ra_rb_rc(ADD, AT1, AT1, AT1)
+    put_op_ra_rb_rc(ADD, AT1, AT1, AT0)
+    put_op_ra_rb_rc(ADD, PC, PC, AT1)
+    put_op_ra_rb_rc(ADD, PC, PC, AT0)
+    put_op_ra_imm(SET, PC,imm(1))
+    put_op(NOP)
+    ret_instrs()
+}
+
+Instruction* haltCompiler(StatementList *prog, LineStatement *s) {
+    init_instrs(1)
+    put_op_ra_imm(SET, PC,s->assembledLocation)
     ret_instrs()
 }
 
@@ -57,7 +114,14 @@ CompilerSpec instructionCompilers[] = {
         {"LDB", ldbCompiler, 1},
         {"STB", stbCompiler, 1},
         {"JMPI", jmpiCompiler, 1},
+        {"ADDI", addiCompiler, 2},
+        {"SUBI", subiCompiler, 2},
+        {"DEC", decCompiler, 2},
+        {"INC", incCompiler, 2},
         {"PUSH", pushCompiler, 3},
+        {"POP", popCompiler, 3},
+        {"JZ", jzCompiler, 10},
+        {"HALT", haltCompiler, 1},
 };
 
 CompilerSpec *getstatementspec(LineStatement *s) {

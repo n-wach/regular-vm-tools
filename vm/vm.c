@@ -9,7 +9,7 @@
 #include "../common/instructions.h"
 #include "../disasm/disasm.h"
 
-uint8_t vmRegR(VM *vm, Reg reg) {
+uint32_t vmRegR(VM *vm, Reg reg) {
     if(reg > MAX_REG || reg < MIN_REG) {
         printf("Invalid Reg Read: 0x%x\n", reg);
         return 0;
@@ -55,19 +55,20 @@ void vmInit(VM *vm) {
     if(vm->memory == NULL) {
         printf("Unable to allocate memory\n");
     }
-    for(int i = 0; i < MEM_SIZE; i++) {
+    for(int i = 0; i <= MEM_SIZE; i++) {
         vm->memory[i] = 0;
     }
-    for(int i = 0; i < MAX_REG; i++) {
+    for(int i = 0; i <= MAX_REG; i++) {
         vm->reg[i] = 0;
     }
+    vm->reg[SP] = STACK_BASE;
     vm->halted = false;
 }
 
 void vmRun(VM *vm) {
     while(!vm->halted) {
-        vmStep(vm);
         vmPrint(vm);
+        vmStep(vm);
     }
 }
 
@@ -182,8 +183,8 @@ void vmPrint(VM *vm) {
         }
     }
     printf("Instructions:\n");
+    uint32_t pc = vm->reg[PC];
     for(int i = -2; i <= 2; i++) {
-        uint32_t pc = vm->reg[PC];
         if(i == 0) {
             printf(" %0#4x >> ", pc);
             decode_instruction(vmCurInstr(vm), stdout);
@@ -193,6 +194,12 @@ void vmPrint(VM *vm) {
                 decode_instruction(vmRelInstr(vm, i), stdout);
             }
         }
+    }
+    printf("Stack:\n");
+    uint32_t sp = vm->reg[SP];
+    for(int i = 0; i <= 8; i++) {
+        if(sp + i * 4 > STACK_BASE) break;
+        printf(" %0#4x    %0#8x\n", i * 4, *((uint32_t *) vmMemRP(vm, sp + i * 4)));
     }
     printf("Press Enter to Run Next Instruction");
     getchar();
