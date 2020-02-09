@@ -92,10 +92,28 @@ int decode_instruction(const Instruction i, FILE *out) {
             fprintfOpRaRb(out, i, STB);
             break;
         default:
-            printf("Unknown Op %x", op);
+            printf("Unknown Op %x\n", op);
             return -1;
     }
 
     return 1;
 }
 
+void decompileFile(FILE *input, FILE *output) {
+    int  p = 0;
+    while (1) {
+        Instruction i;
+        fread(&i, 4, 1, input);
+        if(feof(input)) break;
+        fprintf(output, "x%04x: ", p);
+        int status = decode_instruction(i, output);
+        if(status == -1) {
+            printf("Decode error 0x%x 0x%x 0x%x 0x%x", i.op_ra_rb_rc.op,
+                   i.op_ra_rb_rc.ra, i.op_ra_rb_rc.rb, i.op_ra_rb_rc.rc);
+            fclose(input);
+            fclose(output);
+            return;
+        }
+        p += 4;
+    }
+}

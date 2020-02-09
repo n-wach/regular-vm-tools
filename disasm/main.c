@@ -23,26 +23,11 @@ int main(int argc, char *argv[]) {
         fclose(input);
         return -1;
     }
-
-
+    
     printf("Reading...\n");
-    while (1) {
-        Instruction i;
-        fread(&i, 4, 1, input);
-        if(feof(input)) break;
-        int status = decode_instruction(i, output);
-        if(status == -1) {
-            printf("Decode error 0x%x 0x%x 0x%x 0x%x", i.op_ra_rb_rc.op,
-                   i.op_ra_rb_rc.ra, i.op_ra_rb_rc.rb, i.op_ra_rb_rc.rc);
-            fclose(input);
-            fclose(output);
-            return -1;
-        }
-    }
-
+    decompileFile(input, output);
     printf("Done.\n");
 
     fclose(input);
     fclose(output);
 }
-

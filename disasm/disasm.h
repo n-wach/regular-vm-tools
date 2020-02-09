@@ -7,6 +7,8 @@
 
 #include "../common/instructions.h"
 
+void decompileFile(FILE *pFile, FILE *pFile1);
+
 int decode_instruction(Instruction i, FILE *out);
 
 #endif //REGULARVM_DISASM_H

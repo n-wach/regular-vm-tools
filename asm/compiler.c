@@ -75,7 +75,7 @@ Instruction* popCompiler(StatementList *prog, LineStatement *s) {
 }
 
 Instruction* jzCompiler(StatementList *prog, LineStatement *s) {
-    init_instrs(10)
+    init_instrs(9)
     put_op_ra_imm(SET, AT0, 0)
     put_op_ra_rb_rc(TCU, AT1, reg(0), AT0)
     put_op_ra_imm(SET, AT0, 4)
@@ -85,13 +85,38 @@ Instruction* jzCompiler(StatementList *prog, LineStatement *s) {
     put_op_ra_rb_rc(ADD, PC, PC, AT1)
     put_op_ra_rb_rc(ADD, PC, PC, AT0)
     put_op_ra_imm(SET, PC,imm(1))
-    put_op(NOP)
     ret_instrs()
 }
 
 Instruction* haltCompiler(StatementList *prog, LineStatement *s) {
     init_instrs(1)
     put_op_ra_imm(SET, PC,s->assembledLocation)
+    ret_instrs()
+}
+
+Instruction* callCompiler(StatementList *prog, LineStatement *s) {
+    init_instrs(5)
+    put_op_ra_imm(SET, AT0, s->assembledLocation + 5 * 4)
+    put_op_ra_rb(STW, SP, AT0)
+    put_op_ra_imm(SET, AT0, 4)
+    put_op_ra_rb_rc(SUB, SP, SP, AT0)
+    put_op_ra_imm(SET, PC, imm(0))
+    ret_instrs()
+}
+
+Instruction* retCompiler(StatementList *prog, LineStatement *s) {
+    init_instrs(3)
+    put_op_ra_imm(SET, AT0, 4)
+    put_op_ra_rb_rc(ADD, SP, SP, AT0)
+    put_op_ra_rb(LDW, PC, SP)
+    ret_instrs()
+}
+
+Instruction* rargCompiler(StatementList *prog, LineStatement *s) {
+    init_instrs(3)
+    put_op_ra_imm(SET, AT0, 4 + imm(1) * 4)
+    put_op_ra_rb_rc(ADD, AT0, SP, AT0)
+    put_op_ra_rb(LDW, reg(0), AT0)
     ret_instrs()
 }
 
@@ -113,15 +138,24 @@ CompilerSpec instructionCompilers[] = {
         {"STW", stwCompiler, 1},
         {"LDB", ldbCompiler, 1},
         {"STB", stbCompiler, 1},
+        // imms
         {"JMPI", jmpiCompiler, 1},
         {"ADDI", addiCompiler, 2},
         {"SUBI", subiCompiler, 2},
+        // dec/inc
         {"DEC", decCompiler, 2},
         {"INC", incCompiler, 2},
+        // stack
         {"PUSH", pushCompiler, 3},
         {"POP", popCompiler, 3},
-        {"JZ", jzCompiler, 10},
+        {"RARG", rargCompiler, 3},
+        // conditional jumps
+        {"JZ", jzCompiler, 9},
+        // halt
         {"HALT", haltCompiler, 1},
+        // functions
+        {"CALL", callCompiler, 5},
+        {"RET", retCompiler, 3},
 };
 
 CompilerSpec *getstatementspec(LineStatement *s) {

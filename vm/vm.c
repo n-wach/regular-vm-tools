@@ -22,6 +22,10 @@ void vmRegW(VM *vm, Reg reg, uint32_t value) {
         printf("Invalid Reg Write: 0x%x\n", reg);
         return;
     }
+    if(reg == PC && vm->reg[PC] == value + 4) {
+        printf("Loop detected\n");
+        vm->halted = true;
+    }
     vm->reg[reg] = value;
 }
 
@@ -67,9 +71,9 @@ void vmInit(VM *vm) {
 
 void vmRun(VM *vm) {
     while(!vm->halted) {
-        vmPrint(vm);
         vmStep(vm);
     }
+    vmPrint(vm);
 }
 
 void vmStep(VM *vm) {
@@ -199,7 +203,8 @@ void vmPrint(VM *vm) {
     uint32_t sp = vm->reg[SP];
     for(int i = 0; i <= 8; i++) {
         if(sp + i * 4 > STACK_BASE) break;
-        printf(" %0#4x    %0#8x\n", i * 4, *((uint32_t *) vmMemRP(vm, sp + i * 4)));
+        uint32_t v = *((uint32_t *) vmMemRP(vm, sp + i * 4));
+        printf(" %0#4x    %0#8x  (%d)\n", i * 4, v, v);
     }
     printf("Press Enter to Run Next Instruction");
     getchar();

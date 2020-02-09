@@ -39,7 +39,7 @@ typedef enum __attribute__((__packed__)) reg {
     R25=0x19,
     R26=0x1a,
     R27=0x1b,
-    R28=0x1c,
+    RR=0x1c,
     AT0=0x1d,
     AT1=0x1e,
     SP=0x1f,

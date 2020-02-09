@@ -51,6 +51,6 @@ Module.symvers
 Mkfile.old
 dkms.conf
 /cmake-build-debug/
-/testing/*
-!/testing/test*.asm
+/testing/bin
+/testing/dis.asm
 .idea/

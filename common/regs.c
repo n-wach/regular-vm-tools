@@ -35,7 +35,7 @@ char reg_mnemonics[][4] = {
         "r25",
         "r26",
         "r27",
-        "r28",
+        "rr",
         "at0",
         "at1",
         "sp"
