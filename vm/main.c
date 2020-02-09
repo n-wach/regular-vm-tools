@@ -15,26 +15,7 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    fseek (input , 0 , SEEK_END);
-    size_t fileSize = ftell(input);
-    rewind(input);
+    execFile(input);
 
-    if(fileSize > MEM_SIZE) {
-        printf("Program too large for memory\n");
-        return -1;
-    }
-
-    VM vm;
-    vmInit(&vm);
-
-    size_t result = fread(vm.memory, 1, fileSize, input);
-    if (result != fileSize) {
-        printf("Failed to read program into memory\n");
-        return -1;
-    }
-
-    vmRun(&vm);
-
-    vmFree(&vm);
     fclose(input);
 }

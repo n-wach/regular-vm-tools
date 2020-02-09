@@ -23,9 +23,9 @@ int main(int argc, char *argv[]) {
         fclose(input);
         return -1;
     }
-    
+
     printf("Reading...\n");
-    decompileFile(input, output);
+    disassembleFile(input, output);
     printf("Done.\n");
 
     fclose(input);

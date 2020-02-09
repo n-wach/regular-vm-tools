@@ -23,7 +23,7 @@ void vmRegW(VM *vm, Reg reg, uint32_t value) {
         return;
     }
     if(reg == PC && vm->reg[PC] == value + 4) {
-        printf("Loop detected\n");
+        printf("Halting loop detected\n");
         vm->halted = true;
     }
     vm->reg[reg] = value;
@@ -206,10 +206,38 @@ void vmPrint(VM *vm) {
         uint32_t v = *((uint32_t *) vmMemRP(vm, sp + i * 4));
         printf(" %0#4x    %0#8x  (%d)\n", i * 4, v, v);
     }
+}
+
+void vmDebug(VM *vm) {
+    vmPrint(vm);
     printf("Press Enter to Run Next Instruction");
     getchar();
 }
 
 void vmFree(VM *vm) {
     free(vm->memory);
+}
+
+void execFile(FILE *input) {
+    fseek (input , 0 , SEEK_END);
+    size_t fileSize = ftell(input);
+    rewind(input);
+
+    if(fileSize > MEM_SIZE) {
+        printf("Program too large for memory\n");
+        return;
+    }
+
+    VM vm;
+    vmInit(&vm);
+
+    size_t result = fread(vm.memory, 1, fileSize, input);
+    if (result != fileSize) {
+        printf("Failed to read program into memory\n");
+        return;
+    }
+
+    vmRun(&vm);
+
+    vmFree(&vm);
 }

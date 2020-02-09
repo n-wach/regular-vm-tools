@@ -99,7 +99,7 @@ int decode_instruction(const Instruction i, FILE *out) {
     return 1;
 }
 
-void decompileFile(FILE *input, FILE *output) {
+void disassembleFile(FILE *input, FILE *output) {
     int  p = 0;
     while (1) {
         Instruction i;

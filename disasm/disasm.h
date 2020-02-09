@@ -7,7 +7,7 @@
 
 #include "../common/instructions.h"
 
-void decompileFile(FILE *pFile, FILE *pFile1);
+void disassembleFile(FILE *input, FILE *output);
 
 int decode_instruction(Instruction i, FILE *out);
 

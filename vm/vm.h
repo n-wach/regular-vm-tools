@@ -34,6 +34,9 @@ Instruction vmCurInstr(VM *vm);
 Instruction vmRelInstr(VM *vm, int offset);
 void vmExecInstr(VM *vm, Instruction instr);
 void vmPrint(VM *vm);
+void vmDebug(VM *vm);
 void vmFree(VM *vm);
+
+void execFile(FILE *input);
 
 #endif //REGULARVM_VM_H

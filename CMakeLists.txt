@@ -19,3 +19,14 @@ add_executable(VM
         vm/main.c
         disasm/disasm.c
         common/regs.c)
+add_executable(Exec
+        vm/vm.c
+        exec/exec.c
+        disasm/disasm.c
+        asm/asm.c
+        asm/statement.c
+        asm/compiler.c
+        calc/token.c
+        calc/error.c
+        calc/calc.c
+        common/regs.c)
